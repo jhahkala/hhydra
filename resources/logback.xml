@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+<!-- Log to file -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+	<file>logfile.log</file>
+	<append>true</append>
+	<encoder>
+            <pattern>%-4relative [%thread] %-5level %logger{35} - %msg %n</pattern>
+        </encoder>
+    </appender>
+
+<!-- Set the root logger to point to the FILE configured above -->
+    <root>
+        <appender-ref ref="FILE"/>
+	<level value="INFO"/>
+    </root>
+
+</configuration>
