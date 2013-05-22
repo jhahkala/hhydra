@@ -1,1 +1,16 @@
 target/
+target
+*~
+*.log
+.classpath
+.classpath/
+.project
+.project/
+*.ipr
+*.iws
+*.iml
+.settings
+.settings/
+meta-storage.dat
+users-storage.dat
+hydra-storage.dat
