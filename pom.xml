@@ -1,24 +1,43 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.preuve</groupId>
+
+	<groupId>org.hydra</groupId>
 	<artifactId>hhydra</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>meta</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+	<developers>
+		<developer>
+			<id>joni</id>
+			<name>Joni Hahkala</name>
+			<email>joni.hahkala@cern.ch</email>
+			<organization>UH.HIP</organization>
+			<organizationUrl>http://tek.hip.fi/</organizationUrl>
+			<roles>
+				<role>Developer</role>
+				<role>Documentation</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
 
 	<dependencies>
 		<dependency>
-			<groupId>fi.hip</groupId>
+			<groupId>org.joni.test</groupId>
 			<artifactId>meta</artifactId>
 			<version>0.5.0-SNAPSHOT</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/src/main/lib/meta-0.5.0-SNAPSHOT.jar</systemPath>
 		</dependency>
 		<dependency>
-			<groupId>fi.hip</groupId>
+			<groupId>org.glite.security</groupId>
 			<artifactId>trustmanager</artifactId>
-			<version>0.5.0-SNAPSHOT</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/src/main/lib/trustmanager.jar</systemPath>
+			<version>3.1.3</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -77,6 +96,10 @@
 				</property>
 			</activation>
 			<repositories>
+				<repository>
+					<id>local</id>
+					<url>file://${project.basedir}/src/repo</url>
+				</repository>
 				<repository>
 					<id>jboss-public-repository-group</id>
 					<name>JBoss Public Maven Repository Group</name>

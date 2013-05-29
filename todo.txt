@@ -1,2 +1,3 @@
 Todo:
 - add user list for allowed users, has to be optional if we want to support grid use case
+- do real logging
