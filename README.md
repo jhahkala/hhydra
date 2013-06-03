@@ -78,3 +78,5 @@ You should have the trusted CA certificates in the specified directory and the c
 Run the client with command:
 /usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/bin/java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf put --id test2 --iv 12345 --key 12345678 --min 2 --part 3
 
+(Have to use openJDK, as the sun/oracle jdk gives security violation about loading the bouncycastle JCE.)
+
