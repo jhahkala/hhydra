@@ -60,6 +60,8 @@ You should have the CA certificates in the directory specified and the host cred
 Start the server with command:
 java -cp hhydra.jar org.hydra.server.HydraServer hhydra.conf
 
+On RHEL machine don't forget to edit /etc/sysconfig/iptables to open the ports for the service.
+
 
 Run the client
 ==============

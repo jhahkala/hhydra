@@ -17,6 +17,7 @@ import org.hydra.KeyPiece;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.joni.test.meta.ACLHandler;
+import org.joni.test.meta.ACLItem;
 
 import com.caucho.hessian.server.HessianServlet;
 
@@ -157,6 +158,11 @@ public class HydraService extends HessianServlet implements HydraAPI {
             throw new IOException("Key piece does not exist.");
         }
         if (!ACLHandler.hasWriteAccess(getUser(), piece.getACL())) {
+            
+            System.out.println("User " + getUser() + " was denied access to " + id + ", the ACL has entries:");
+            for(ACLItem item : piece.getACL()){
+                System.out.println(item.getUser());
+            }
             throw new IOException("Access denied.");
         }
         _store.remove(id);
