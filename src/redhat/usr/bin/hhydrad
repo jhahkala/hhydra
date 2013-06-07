@@ -1,0 +1,12 @@
+#!/bin/sh
+# -----------------------------------------------------------------------------
+# Start/Stop Script for the CATALINA Server
+#
+JAVA_HOME="/usr/lib/jvm/jre-openjdk/"
+HHYDRA_PID=/var/run/hhydra/$1.pid
+HHYDRA_HOME=/var/lib/hhydra
+
+echo "Using JAVA_HOME:       $JAVA_HOME"
+
+nohup java -jar ${HHYDRA_HOME}/hhydra.jar /etc/hhydra.d/$1 >> /var/log/hhydra/$1.log 2>&1 &
+echo $!>$HHYDRA_PID

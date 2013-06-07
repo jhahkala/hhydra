@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns="urn:infinispan:config:5.0">
+  <global />
+  <default />
+  <namedCache name="hhydra1">
+    <loaders shared="false">
+      <loader
+          class="org.infinispan.loaders.file.FileCacheStore"
+          fetchPersistentState="true" ignoreModifications="false"
+          purgeOnStartup="false">
+        <properties>
+          <property name="location" value="/var/lib/hhydra/hhydra1-storage.dat" />
+        </properties>
+      </loader>
+    </loaders>
+  </namedCache>
+  <namedCache name="hydraUsers1">
+    <loaders shared="false">
+      <loader
+          class="org.infinispan.loaders.file.FileCacheStore"
+          fetchPersistentState="true" ignoreModifications="false"
+          purgeOnStartup="false">
+        <properties>
+          <property name="location" value="/var/lib/hhydra/hhydra1-users.dat" />
+        </properties>
+      </loader>
+    </loaders>
+  </namedCache>
+</infinispan>

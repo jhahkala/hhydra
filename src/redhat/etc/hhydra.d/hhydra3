@@ -1,0 +1,7 @@
+port=50203
+storeConfigFile=/etc/hhydra/hhydra3-storage.xml
+host=sicx1.hip.helsinki.fi
+sslCertFile=/etc/grid-security/hhydra-cert.pem
+sslKey=/etc/grid-security/hhydra-key.pem
+trustStoreDir=/etc/grid-security/certificates
+superuser=CN=trusted client,OU=Relaxation,O=Utopia,L=Tropic,C=UG

@@ -1,0 +1,291 @@
+#!/bin/bash
+#
+# meta      This shell script takes care of starting and stopping meta service
+#
+# chkconfig: - 81 19
+#
+### BEGIN INIT INFO
+# Provides: meta
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start:
+# Default-Stop:
+# Description: implementation of SICX meta service
+# Short-Description: start and stop meta service
+### END INIT INFO
+#
+# - Writtem by Joni Hahkala based on tomcat5 script by:
+# - originally written by Henri Gomez, Keith Irwin, and Nicolas Mailhot
+# - heavily rewritten by Deepak Bhole and Jason Corley
+#
+
+# commented out until the RHEL and FC daemon functions converge
+# Source the function library
+#if [ -r "/etc/rc.d/init.d/functions" ]; then
+    #. /etc/rc.d/init.d/functions
+#fi
+
+NAME="$(basename $0)"
+unset ISBOOT
+if [ "${NAME:0:1}" = "S" -o "${NAME:0:1}" = "K" ]; then
+    NAME="${NAME:3}"
+    ISBOOT="1"
+fi
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x "/sbin/runuser" ]; then
+    SU="/sbin/runuser"
+else
+    SU="su"
+fi
+
+#META_PID=/var/run/meta.pid
+HHYDRA_USER=hhydrauser
+#HHYDRA_LOG=/var/log/hhydra.log
+HHYDRA_HOME=/var/lib/hhydra
+
+RETVAL="0"
+
+# remove when the RHEL and FC daemon functions converge
+# (pulled from /etc/rc.d/init.d/functions)
+function checkpid() {
+    local i
+    for i in $* ; do
+        if [ -d "/proc/${i}" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# remove when the RHEL and FC daemon functions converge
+# (pulled from /etc/rc.d/init.d/functions)
+function echo_failure() {
+    echo -en "\\033[60G"
+    echo -n "[  "
+    echo -n $"FAILED"
+    echo -n "  ]"
+    echo -ne "\r"
+    return 1
+}
+
+# remove when the RHEL and FC daemon functions converge
+# (pulled from /etc/rc.d/init.d/functions)
+function echo_success() {
+    echo -en "\\033[60G"
+    echo -n "[  "
+    echo -n $"OK"
+    echo -n "  ]"
+    echo -ne "\r"
+    return 0
+}
+
+# starts a single instance of hhydra
+function start() {
+    SERVICE=$1
+    echo "Starting hhydra ${SERVICE}..."
+    PID_FILE=/var/run/hhydra/${SERVICE}.pid
+    LOG_FILE=/var/log/hhydra/${SERVICE}.log
+    echo -n "Starting hhydra: ${SERVICE} "
+    if [ -f "/var/lock/subsys/hhydra/${SERVICE}" ] ; then
+        if [ -f ${PID_FILE} ]; then
+            read kpid < ${PID_FILE}
+                if checkpid $kpid 2>&1; then
+                    echo "$SERVICE hhydra process already running"
+                        return -1
+                    else
+                        echo -n "lock file found but no process running for"
+                        echo " pid $kpid, continuing"
+                fi
+        fi
+    fi
+    if [ ! -e "/var/run/hhydra" ] ; then
+	echo "create /var/run/hhydra..."
+	mkdir /var/run/hhydra
+	chown ${HHYDRA_USER}:${HHYDRA_USER} /var/run/hhydra
+    elif [ ! -d /var/run/hhydra ] ; then
+	echo "there is a hhydra pid file in place of hhydra pid directory"
+    fi
+    echo "create pid file ${PID_FILE}"
+    touch $PID_FILE 2>&1 || RETVAL="4"
+    if [ "$RETVAL" -eq "0" -a "$?" -eq "0" ]; then
+       chown ${HHYDRA_USER}:${HHYDRA_USER} $PID_FILE
+    else
+	echo "Pid file creation failed"
+    fi
+    echo "checking/creating loggin directory"
+    if [ ! -e /var/log/hhydra ] ; then
+        mkdir /var/log/hhydra
+        chown ${HHYDRA_USER}:${HHYDRA_USER} /var/log/hhydra
+    elif [ ! -d /var/log/hhydra ] ; then
+        echo "there is a file in place of hhydra logging directory"
+    fi
+
+    echo "creatign loggin file"
+    touch $LOG_FILE 2>&1 || RETVAL="4"
+    if [ "$RETVAL" -eq "0" -a "$?" -eq "0" ]; then
+       chown ${HHYDRA_USER}:${HHYDRA_USER} $LOG_FILE
+    else
+	echo "logging file creation failed"
+    fi
+    echo "creating home dir ${HHYDRA_HOME}"
+    mkdir $HHYDRA_HOME >/dev/null 2>&1 || RETVAL="4"
+#    if [ "$RETVAL" -eq "0" -a "$?" -eq "0" ]; then
+       chown ${HHYDRA_USER}:${HHYDRA_USER} $HHYDRA_HOME
+#    fi
+    echo "starting service"
+    $SU - $HHYDRA_USER -c "/usr/bin/hhydrad ${SERVICE}" >> LOG_FILE 2>&1 
+    RETVAL="$?"
+    if [ "$RETVAL" -eq 0 ]; then 
+        echo_success
+	if [ ! -e /var/lock/subsys/hhydra ] ; then
+	    mkdir /var/lock/subsys/hhydra
+	fi
+        touch /var/lock/subsys/hhydra/${SERVICE}
+    else
+        echo_failure
+    fi
+    echo
+    return $RETVAL
+}
+
+function status() {
+    SERVICE=$1
+    RETVAL="1"
+    if [ -f "/var/run/hhydra/${SERVICE}.pid" ]; then
+        read kpid < /var/run/hhydra/${SERVICE}.pid
+        if checkpid $kpid 2>&1; then
+            echo "$0 ${SERVICE} is already running (${kpid})"
+            RETVAL="0"
+        else
+            echo "hhydra ${SERVICE} lock file found but no process running for pid $kpid"
+        fi
+    else
+        pid="$(pgrep -u ${HHYDRA_USER} java)"
+        if [ -n "$pid" ]; then
+            echo "$0 ${SERVICE} running (${pid}) but no PID file exists"
+            RETVAL="0"
+        else
+            echo "$0 ${SERVICE} is stopped"
+        fi
+    fi
+    return $RETVAL
+}
+
+function stop() {
+    SERVICE=$1
+    local STOP_VERBOSE="false"
+    echo -n "Stopping meta service: "
+    if [ -f "/var/lock/subsys/hhydra/${SERVICE}" ]; then
+	echo lock found
+#        $SU - $TOMCAT_USER -c "$TOMCAT_SCRIPT stop" >> $TOMCAT_LOG 2>&1
+#        RETVAL="$?"
+#        if [ "$RETVAL" -eq "0" ]; then
+#            count="0"
+            if [ -f "/var/run/hhydra/${SERVICE}.pid" ]; then
+		echo pid file found
+                read kpid < /var/run/hhydra/${SERVICE}.pid
+		echo pid is $kpid
+#                until [ "$(ps --pid $kpid | grep -c $kpid)" -eq "0" ] || \
+#                      [ "$count" -gt "$SHUTDOWN_WAIT" ]; do
+#                    if [ "$STOP_VERBOSE" = "true" ]; then
+#                        echo -n -e "\nwaiting for processes $kpid to exit"
+#                    fi
+#                    sleep 1
+#                    let count="${count}+1"
+#                done
+#                if [ "$count" -gt "$SHUTDOWN_WAIT" ]; then
+#                    if [ "$STOP_VERBOSE" = "true" ]; then
+#                        echo -n -e "\nkilling processes which didn't stop"
+#                        echo -n -e "after "
+#                        echo -n "$SHUTDOWN_WAIT seconds"
+#                    fi
+                    kill -9 $kpid
+#                fi
+                echo_success
+#                if [ "$count" -gt "0" ]; then
+#                    echo -n -e "\n"
+#                fi
+            fi
+            rm -f /var/lock/subsys/hhydra/$SERVICE /var/run/hhydra/$SERVICE.pid
+#        else
+#            echo_failure
+#        fi
+    else
+	echo No lock found, service probably not running
+    fi
+}
+
+# iterate through the config files in /etc/hhydra.d and start each service
+function start_all(){
+    if [ -d "/etc/hhydra.d" ] ; then
+	for i in `ls /etc/hhydra.d |grep -v "~"` ; do
+	    start $i
+	done
+    else
+	echo "No /etc/hhydra.d directory found, nothing to start"
+    fi
+
+}
+
+# iterate through the config files in /etc/hhydra.d and stop each service
+function stop_all(){
+    if [ -d "/etc/hhydra.d" ] ; then
+        for i in `ls /etc/hhydra.d |grep -v "~"` ; do
+            stop $i
+        done
+    else
+        echo "No /etc/hhydra.d directory found, nothing to stop"
+    fi
+
+}
+
+# iterate through the config files in /etc/hhydra.d and see status of each service
+function stop_all(){
+    if [ -d "/etc/hhydra.d" ] ; then
+        for i in `ls /etc/hhydra.d |grep -v "~"` ; do
+            status $i
+        done
+    else
+        echo "No /etc/hhydra.d directory found, no status to check"
+    fi
+
+}
+
+# See how we were called.
+case "$1" in
+    start)
+#        parseOptions
+        start_all
+        ;;
+    stop)
+#        parseOptions
+        stop_all
+        ;;
+    restart)
+#        parseOptions
+        stop_all
+        sleep 2    
+        start_all
+        ;;
+    condrestart)
+#        if [ -f "/var/run/${NAME}.pid" ]; then
+#            parseOptions
+            stop_all
+            start_all
+#        fi
+        ;;
+    status)
+        status
+        ;;
+    version)
+#        parseOptions
+        ls /var/lib/meta/ |grep "-"
+        ;;
+    *)
+        echo "Usage: hhydra {start|stop|restart|condrestart|status|version}"
+        exit 1
+esac
+
+exit $RETVAL
+

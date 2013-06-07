@@ -173,6 +173,6 @@ public class HydraService extends HessianServlet implements HydraAPI {
      * @see org.hydra.HydraAPI#getVersion()
      */
     public String getVersion() throws IOException {
-        return "0.5.0";
+        return "0.0.1";
     }
 }
