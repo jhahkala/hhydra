@@ -29,7 +29,7 @@ public class HydraService extends HessianServlet implements HydraAPI {
     private static final long serialVersionUID = 260572232283667758L;
     public static final String CACHE_CONFIG_FILE_OPT = "storeConfigFile";
     public static final String SUPER_USER_OPT = "superuser";
-    private String _superUser;
+//    private String _superUser;
     private DefaultCacheManager _storeManager;
     private static Cache<String, KeyPiece> _store = null;
     
@@ -85,12 +85,12 @@ public class HydraService extends HessianServlet implements HydraAPI {
         Properties props = new Properties();
         props.load(new FileReader(configFile));
         String storeConfig = props.getProperty(CACHE_CONFIG_FILE_OPT);
-        String superUser = props.getProperty(SUPER_USER_OPT);
+//        String superUser = props.getProperty(SUPER_USER_OPT);
         // if (superUser == null) {
         // throw new
         // IOException("No superuser setting found in the configuration file.");
         // }
-        _superUser = superUser;
+//        _superUser = superUser;
         testFile = new File(storeConfig);
         if (!testFile.exists()) {
             throw new FileNotFoundException("Storage configuration file \"" + storeConfig + "\" not found.");
