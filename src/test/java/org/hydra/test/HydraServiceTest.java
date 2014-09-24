@@ -1,5 +1,8 @@
 package org.hydra.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -20,7 +23,7 @@ import org.junit.Test;
 
 import com.caucho.hessian.client.HessianProxyFactory;
 
-public class HydraServiceTest extends TestCase {
+public class HydraServiceTest {
     public static final String TEST_USER = "CN=trusted client,OU=Relaxation,O=Utopia,L=Tropic,C=UG";
     public static final String TEST_USER2 = "CN=trusted clientserver,OU=Relaxation,O=Utopia,L=Tropic,C=UG";
     public static final String TRUSTED_CLIENT_CONFIG_FILE = "src/test/hydra-client-trusted.conf";
@@ -39,6 +42,10 @@ public class HydraServiceTest extends TestCase {
         HttpsURLConnection.setDefaultSSLSocketFactory(wrapper.getSocketFactory());
         HttpsURLConnection.setDefaultHostnameVerifier(new TMHostnameVerifier());
 
+    }
+    
+    public void testDummy(){
+    	return;
     }
 
     @Test

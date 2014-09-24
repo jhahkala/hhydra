@@ -51,6 +51,12 @@ public class HydraService extends HessianServlet implements HydraAPI {
         super.service(request, response);
     }
 
+    public void destroy(){
+        _store.stop();
+        _storeManager.stop();
+        _storeManager = null;
+    }
+
     /**
      * Gets the user name, in current mode from the certificate chain in thread
      * local storage where they were stored during the initial call to the
