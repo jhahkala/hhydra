@@ -15,4 +15,16 @@
       </loader>
     </loaders>
   </namedCache>
+  <namedCache name="passwordsAndSessions">
+    <loaders shared="false">
+      <loader
+          class="org.infinispan.loaders.file.FileCacheStore"
+          fetchPersistentState="false" ignoreModifications="false"
+          purgeOnStartup="true">
+        <properties>
+          <property name="location" value="srp-storage.dat" />
+        </properties>
+      </loader>
+    </loaders>
+  </namedCache>
 </infinispan>

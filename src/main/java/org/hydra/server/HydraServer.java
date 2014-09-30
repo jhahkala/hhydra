@@ -14,6 +14,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glite.security.trustmanager.ContextWrapper;
 
+import fi.hip.sicx.srp.SRPService;
+
 public class HydraServer {
 
     private Server _server = null;
@@ -74,34 +76,19 @@ public class HydraServer {
         _server.setSendServerVersion(false);
         _server.setSendDateHeader(false);
         _server.setConnectors(new Connector[] { connector });
-        ServletContextHandler context = getConfiguredContext(filename);
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+
+        context.setContextPath("/"); // = everything, no securitycontexthandler etc yet
+
+        SRPService srpService = new SRPService(filename);
+        context.addServlet(new ServletHolder(srpService), "/SRPService");
+        //needed for the access to the session cache
+        context.addServlet(new ServletHolder(new HydraService(filename, srpService)), "/HydraService");
         context.setContextPath("/");
         _server.setHandler(context);
 
     }
 
-    /**
-     * Create a new ContextHandler for the servlet and configure it.
-     * 
-     * @return A ContextHandler, final.
-     * @throws IOException
-     */
-    private final ServletContextHandler getConfiguredContext(String filename) throws IOException {
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-
-        context.setContextPath("/"); // = everything, no securitycontexthandler
-                                     // etc yet
-
-        // The setSecure actually has to be set to false. Read docs. It means
-        // that only secure
-        // requests can get cookies marked as secure back.
-        // context.getSessionHandler().getSessionManager().
-        // .getSessionCookieConfig().setSecure(false);
-
-        context.addServlet(new ServletHolder(new HydraService(filename)), "/HydraService");
-
-        return context;
-    }
 
     /**
      * The main method to start the server from command line.

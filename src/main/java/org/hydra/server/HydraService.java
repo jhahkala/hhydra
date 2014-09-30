@@ -4,12 +4,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.security.cert.X509Certificate;
 import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.glite.security.util.DNHandler;
 import org.hydra.HydraAPI;
@@ -18,8 +21,14 @@ import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.joni.test.meta.ACLHandler;
 import org.joni.test.meta.ACLItem;
+import org.joni.test.meta.SessionException;
 
 import com.caucho.hessian.server.HessianServlet;
+
+import fi.hip.sicx.srp.SRPService;
+import fi.hip.sicx.srp.Session;
+import fi.hip.sicx.srp.SessionToken;
+import fi.hip.sicx.srp.User;
 
 public class HydraService extends HessianServlet implements HydraAPI {
 
@@ -32,8 +41,10 @@ public class HydraService extends HessianServlet implements HydraAPI {
 //    private String _superUser;
     private DefaultCacheManager _storeManager;
     private static Cache<String, KeyPiece> _store = null;
+    private static Cache<String, User> _sessions = null;
     
     private static ThreadLocal<X509Certificate[]> certStore = new ThreadLocal<X509Certificate[]>();
+    private static ThreadLocal<String> username = new ThreadLocal<String>();
 
     /**
      * Overridden to store the user certificate to the thread local storage
@@ -47,12 +58,64 @@ public class HydraService extends HessianServlet implements HydraAPI {
         // Interpret the client's certificate.
         X509Certificate[] cert = (X509Certificate[]) request.getAttribute("javax.servlet.request.X509Certificate");
         certStore.set(cert);
+
+        if (request instanceof HttpServletRequest) {
+            username.set(null);
+            // HttpSession session = ((HttpServletRequest)request).getSession();
+            HttpServletRequest sreg = (HttpServletRequest) request;
+            String SRPSessionEncoded = sreg.getHeader("SRPSession");
+//            System.out.println("Session: " + SRPSessionEncoded);
+            try {
+                if (SRPSessionEncoded == null) {
+                    throw new IOException("No session, please log in.");
+                }
+                String SRPSession;
+                try {
+                    SRPSession = URLDecoder.decode(SRPSessionEncoded, "UTF-8");
+                } catch (Exception e) {
+                    throw new IOException("Invalid Session token.");
+                }
+
+                SessionToken token = new SessionToken(SRPSession);
+                byte identity[] = token.getIdentity();
+                byte sessionId[] = token.getHash();
+                User user = _sessions.get(new String(identity));
+                if (user == null) {
+                    throw new IOException("Access denied.");
+                }
+//                List<Session> list = user.getSessions();
+//                for (Session session : list) {
+//                    System.out.println("session: " + new String(session._sessionId));
+//                }
+                Session session = user.findSession(sessionId);
+                if (session == null) {
+                    throw new IOException("Access is denied.");
+                }
+                if (!session.isValid(sessionId)) {
+                    throw new IOException("Session is not valid.");
+                }
+//                System.out.println("User " + new String(user.getIdentity()) + " is valid");
+                username.set(new String(user.getIdentity()));
+            } catch (Exception e) {
+//                System.out.println("Exception: " + e.getMessage());
+                HttpServletResponse httpResponse = (HttpServletResponse) response;
+                httpResponse.sendError(401, e.getMessage());
+                e.printStackTrace();
+                return;
+            }
+
+            // username = (String) session.getAttribute(SPConfiguration.userIdKey);
+            // System.out.println("User : " + username + " accessing... ");
+        } else {
+            // username = null;
+        }
         
         super.service(request, response);
     }
 
     public void destroy(){
         _store.stop();
+        _sessions.stop();
         _storeManager.stop();
         _storeManager = null;
     }
@@ -63,13 +126,21 @@ public class HydraService extends HessianServlet implements HydraAPI {
      * service method.
      * 
      * @return The user name.
+     * @throws SessionException 
      */
-    private String getUser() {
+    private String getUser() throws SessionException {
+        String userString = username.get();
+        if (userString != null) {
+            return userString;
+        }
         // Interpret the client's certificate.
         X509Certificate[] cert = certStore.get();
-        String user = DNHandler.getSubject(cert[0]).getRFCDNv2();
+        if (cert != null) {
+            String user = DNHandler.getSubject(cert[0]).getRFCDNv2();
 
-        return user;
+            return user;
+        }
+        throw new SessionException("No session found. Login to start a session.");
     }
 
     /**
@@ -79,7 +150,7 @@ public class HydraService extends HessianServlet implements HydraAPI {
      * @throws IOException Thrown in case there is problems reading the config
      *             file.
      */
-    public HydraService(String configFile) throws IOException {
+    public HydraService(String configFile, SRPService srpService) throws IOException {
         File testFile = new File(configFile);
         if (!testFile.exists()) {
             throw new FileNotFoundException("Configuration file \"" + configFile + "\" not found.");
@@ -108,6 +179,8 @@ public class HydraService extends HessianServlet implements HydraAPI {
         System.out.println(configFile);
         _storeManager = new DefaultCacheManager(storeConfig);
         _store = _storeManager.getCache("hydra");
+        _storeManager = srpService.getCacheManager();
+        _sessions = srpService.getSessionCache();
     }
 
     /*
@@ -122,6 +195,7 @@ public class HydraService extends HessianServlet implements HydraAPI {
         if (key == null) {
             throw new NullPointerException("Can't put null keypiece.");
         }
+        // TODO check that the user has access to the key piece, to avoid unremovable pieces. 
         // TODO should batch this to avoid race condition...
         KeyPiece piece = _store.get(id);
         if (piece != null) {

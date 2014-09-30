@@ -19,6 +19,9 @@ import org.hydra.KeyPiece;
 import org.hydra.server.HydraServer;
 import org.joni.test.meta.ACLItem;
 import org.joni.test.meta.client.TMHostnameVerifier;
+import org.joni.test.meta.server.MetaServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.caucho.hessian.client.HessianProxyFactory;
@@ -31,16 +34,21 @@ public class HydraServiceTest {
     public static final String SERVER_PURGE_CONFIG_FILE = "src/test/hydra-purge.conf";
     HydraServer server;
 
-    public void setup() throws Exception {
+    @After
+    public void endserver() throws Exception {
+        System.out.println("****Stop");
+        if (server != null) {
+            server.stop();
+            server = null;
+        }
+    }
+
+    @Before
+    public void setupServer() throws Exception {
+        System.out.println("Starting server....");
         server = new HydraServer();
         server.configure(SERVER_PURGE_CONFIG_FILE);
         server.start();
-        File configFile = new File(TRUSTED_CLIENT_CONFIG_FILE);
-        Properties props = new Properties();
-        props.load(new FileReader(configFile));
-        ContextWrapper wrapper = new ContextWrapper(props, false);
-        HttpsURLConnection.setDefaultSSLSocketFactory(wrapper.getSocketFactory());
-        HttpsURLConnection.setDefaultHostnameVerifier(new TMHostnameVerifier());
 
     }
     
@@ -51,8 +59,6 @@ public class HydraServiceTest {
     @Test
     public void testDelete() throws Exception {
         try {
-
-            setup();
 
             String url = "https://localhost:8773/HydraService";
             HessianProxyFactory factory = new HessianProxyFactory();
@@ -142,8 +148,6 @@ public class HydraServiceTest {
     public void testPut() throws Exception {
         try {
 
-            setup();
-
             String url = "https://localhost:8773/HydraService";
             HessianProxyFactory factory = new HessianProxyFactory();
             HydraAPI service = (HydraAPI) factory.create(HydraAPI.class, url);
@@ -205,8 +209,6 @@ public class HydraServiceTest {
     @Test
     public void testGet() throws Exception {
         try {
-
-            setup();
 
             String url = "https://localhost:8773/HydraService";
             HessianProxyFactory factory = new HessianProxyFactory();
