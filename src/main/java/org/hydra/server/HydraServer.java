@@ -62,8 +62,8 @@ public class HydraServer {
 
         SslContextFactory factory = new SslContextFactory();
         factory.setSslContext((new ContextWrapper(props, false)).getContext());
-        factory.setWantClientAuth(true);
-        factory.setNeedClientAuth(true);
+        factory.setWantClientAuth(false);
+        factory.setNeedClientAuth(false);
         SslSelectChannelConnector connector = new SslSelectChannelConnector(factory);
 
         int port = Integer.parseInt(props.getProperty(PORT_OPT));

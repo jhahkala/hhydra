@@ -177,7 +177,7 @@ public class HydraService extends HessianServlet implements HydraAPI {
                     + "\" given as a storage configuration file is a directory!");
         }
         System.out.println(configFile);
-        _storeManager = new DefaultCacheManager(storeConfig);
+        _storeManager = srpService.getCacheManager();
         _store = _storeManager.getCache("hydra");
         _storeManager = srpService.getCacheManager();
         _sessions = srpService.getSessionCache();
