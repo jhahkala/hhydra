@@ -10,3 +10,4 @@ target/
 meta-storage.dat
 users-storage.dat
 hydra-storage.dat
+/srp-storage.dat
