@@ -17,11 +17,12 @@ import org.glite.security.util.DNHandler;
 import org.hydra.HydraAPI;
 import org.hydra.KeyPiece;
 import org.joni.test.meta.ACLItem;
-import org.joni.test.meta.client.TMHostnameVerifier;
 
 import com.beust.jcommander.JCommander;
 import com.caucho.hessian.client.HessianProxyFactory;
 import com.caucho.hessian.client.TMHessianURLConnectionFactory;
+
+import fi.hip.sicx.srp.hessian.TMHostnameVerifier;
 
 public class HydraClient {
     public static final String ENDPOINT_OPT = "hydraService";

@@ -3,31 +3,19 @@ package org.hydra.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.util.Properties;
-
-import javax.net.ssl.HttpsURLConnection;
-
 import org.bouncycastle.crypto.CryptoException;
-import org.glite.security.trustmanager.ContextWrapper;
 import org.hydra.HydraAPI;
 import org.hydra.KeyPiece;
 import org.hydra.server.HydraServer;
 import org.joni.test.meta.ACLItem;
-import org.joni.test.meta.MetaDataAPI;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.caucho.hessian.client.HessianProxyFactory;
-import com.caucho.hessian.client.HessianSRPProxy;
-import com.caucho.hessian.client.HessianSRPProxyFactory;
 
 import fi.hip.sicx.srp.HandshakeException;
 import fi.hip.sicx.srp.SRPAPI;
@@ -35,6 +23,8 @@ import fi.hip.sicx.srp.SRPClient;
 import fi.hip.sicx.srp.SRPUtil;
 import fi.hip.sicx.srp.SessionKey;
 import fi.hip.sicx.srp.SessionToken;
+import fi.hip.sicx.srp.hessian.HessianSRPProxy;
+import fi.hip.sicx.srp.hessian.HessianSRPProxyFactory;
 
 public class HydraServiceTest {
     public static final String TEST_USER = "USerNAmssfedfs";
