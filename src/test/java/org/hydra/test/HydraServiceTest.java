@@ -38,7 +38,6 @@ public class HydraServiceTest {
 
     @After
     public void endserver() throws Exception {
-        System.out.println("****Stop");
         if (server != null) {
             server.stop();
             server = null;
@@ -47,7 +46,7 @@ public class HydraServiceTest {
 
     @Before
     public void setupServer() throws Exception {
-        System.out.println("Starting server....");
+        System.out.println("Starting hydra server....");
         server = new HydraServer();
         server.configure(SERVER_PURGE_CONFIG_FILE);
         server.start();

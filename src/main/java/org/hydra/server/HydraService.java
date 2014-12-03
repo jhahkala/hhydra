@@ -176,7 +176,7 @@ public class HydraService extends HessianServlet implements HydraAPI {
             throw new FileNotFoundException("The file \"" + storeConfig
                     + "\" given as a storage configuration file is a directory!");
         }
-        System.out.println(configFile);
+//        System.out.println(configFile);
         _storeManager = srpService.getCacheManager();
         _store = _storeManager.getCache("hydra");
         _storeManager = srpService.getCacheManager();
