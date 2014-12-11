@@ -84,10 +84,10 @@ hydraService=https://sicx1.hip.helsinki.fi:50201/
 You should have the trusted CA certificates in the specified directory.
 
 Run the client with command:
-java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf put --id test2 --iv 12345 --key 12345678 --min 2 --part 3
+> java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf put --id test2 --iv 12345 --key 12345678 --min 2 --part 3
 
 But if the user is not in the service yet, you have to add him before running the put command by runing adduser command:
-java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf adduser --username testuser --password testpw
+> java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf adduser --username testuser --password testpw
 
 
 (Have to use openJDK, as the sun/oracle jdk gives security violation about loading the bouncycastle JCE. Or you have to install the Unlimited Strength Jurisdiction Policy Files, thanks to US government idiocy.)
