@@ -63,9 +63,7 @@ public class HydraServiceTest {
         SRPClient.putVerifier(srpService, username, passwordString);
 
         byte identity[] = SRPUtil.stringBytes(username);
-        byte password[] = SRPUtil.stringBytes(passwordString);
-
-        SessionKey key = SRPClient.login(srpService, identity, password);
+        SessionKey key = SRPClient.login(srpService, username, passwordString);
 
         String url = "https://localhost:8773/HydraService";
         HydraAPI service = (HydraAPI) factory.create(HydraAPI.class, url);

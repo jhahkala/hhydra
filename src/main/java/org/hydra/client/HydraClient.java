@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.cert.X509Certificate;
@@ -11,6 +12,7 @@ import java.util.Properties;
 
 import javax.net.ssl.X509KeyManager;
 
+import org.bouncycastle.crypto.CryptoException;
 import org.glite.security.trustmanager.ContextWrapper;
 import org.glite.security.util.DN;
 import org.glite.security.util.DNHandler;
@@ -19,10 +21,16 @@ import org.hydra.KeyPiece;
 import org.joni.test.meta.ACLItem;
 
 import com.beust.jcommander.JCommander;
-import com.caucho.hessian.client.HessianProxyFactory;
 import com.caucho.hessian.client.TMHessianURLConnectionFactory;
 
-import fi.hip.sicx.srp.hessian.TMHostnameVerifier;
+import fi.hip.sicx.srp.HandshakeException;
+import fi.hip.sicx.srp.SRPAPI;
+import fi.hip.sicx.srp.SRPClient;
+import fi.hip.sicx.srp.SRPUtil;
+import fi.hip.sicx.srp.SessionKey;
+import fi.hip.sicx.srp.SessionToken;
+import fi.hip.sicx.srp.hessian.HessianSRPProxy;
+import fi.hip.sicx.srp.hessian.HessianSRPProxyFactory;
 
 public class HydraClient {
     public static final String ENDPOINT_OPT = "hydraService";
@@ -33,17 +41,21 @@ public class HydraClient {
      * @throws IOException
      * @throws FileNotFoundException
      * @throws GeneralSecurityException
+     * @throws HandshakeException 
+     * @throws CryptoException 
      */
-    public static void main(String[] args) throws FileNotFoundException, IOException, GeneralSecurityException {
+    public static void main(String[] args) throws FileNotFoundException, IOException, GeneralSecurityException, CryptoException, HandshakeException {
         CommandMain cm = new CommandMain();
         JCommander jc = new JCommander(cm);
 
         CommandPut commandPut = new CommandPut();
         CommandGet commandGet = new CommandGet();
         CommandRemove commandRm = new CommandRemove();
+        CommandAddUser commandAddUser = new CommandAddUser();
         jc.addCommand("put", commandPut);
         jc.addCommand("get", commandGet);
         jc.addCommand("rm", commandRm);
+        jc.addCommand("adduser", commandAddUser);
         jc.parse(args);
 
         if (cm.configFile == null) {
@@ -60,25 +72,33 @@ public class HydraClient {
 
         Properties props = new Properties();
         props.load(new FileReader(configFile));
-        _wrapper = new ContextWrapper(props, false);
+        props.setProperty("useClientCredentials", "false");
+        HessianSRPProxyFactory factory = HessianSRPProxyFactory.getFactory(props);
 
-        TMHostnameVerifier verifier = new TMHostnameVerifier();
-
-        String url = props.getProperty(ENDPOINT_OPT, "https://localhost:40669/HydraService");
-        HessianProxyFactory factory = new HessianProxyFactory();
+        String url = props.getProperty(ENDPOINT_OPT, "https://localhost:40669/");
         TMHessianURLConnectionFactory connectionFactory = new TMHessianURLConnectionFactory();
-        connectionFactory.setWrapper(_wrapper);
-        connectionFactory.setVerifier(verifier);
-        connectionFactory.setHessianProxyFactory(factory);
-        factory.setConnectionFactory(connectionFactory);
-        HydraAPI service = (HydraAPI) factory.create(HydraAPI.class, url);
-       
+        String srpUrl = url + "SRPService";
+        SRPAPI srpService = (SRPAPI) factory.create(SRPAPI.class, srpUrl);
+        
+        // add the user
+        if(jc.getParsedCommand().equals("adduser")){
+            adduser(commandAddUser, srpService);
+            return;
+        }
+        String username = props.getProperty("username");
+        SessionKey key = SRPClient.login(srpService, username, props.getProperty("password"));
+
+        byte identity[] = SRPUtil.stringBytes(username);
+        HydraAPI service = (HydraAPI) factory.create(HydraAPI.class, url + "HydraService");
+        HessianSRPProxy proxy = (HessianSRPProxy) Proxy.getInvocationHandler(service);
+        proxy.setSession(new SessionToken(identity, key.getK()).toString());
+      
         if (cm.verbose) {
             System.out.println("Server version: " + service.getVersion());
         }
 
         if (jc.getParsedCommand().equals("put")) {
-            put(commandPut, service);
+            put(commandPut, service, username);
         } else {
             if (jc.getParsedCommand().equals("get")) {
                 get(commandGet, service);
@@ -92,6 +112,11 @@ public class HydraClient {
             }
         }
 
+    }
+
+    private static void adduser(CommandAddUser commandAddUser, SRPAPI srpService) {
+        SRPClient.putVerifier(srpService, commandAddUser.username, commandAddUser.password);
+        
     }
 
     private static void remove(CommandRemove commandRm, HydraAPI service) throws IOException {
@@ -108,7 +133,7 @@ public class HydraClient {
         System.out.println("Number of the piece: " + piece.pieceNumber);
     }
 
-    private static void put(CommandPut commandPut, HydraAPI service) throws IOException {
+    private static void put(CommandPut commandPut, HydraAPI service, String username) throws IOException {
         BigInteger key = new BigInteger(commandPut.key);
         BigInteger iv = new BigInteger(commandPut.iv);
 
@@ -118,13 +143,7 @@ public class HydraClient {
         piece.minPieces = commandPut.minParts;
         piece.pieceNumber = commandPut.partNumber;
 
-        X509KeyManager manager = _wrapper.getKeyManager();
-        String aliases[] = manager.getClientAliases("RSA", null);
-        X509Certificate certs[] = manager.getCertificateChain(aliases[0]);
-        X509Certificate cert = certs[0];
-        DN dn = DNHandler.getSubject(cert);
-        String dnString = dn.getRFCDNv2();
-        piece.addACLItem(new ACLItem(dnString, true, true));
+        piece.addACLItem(new ACLItem(username, true, true));
         service.putKeyPiece(commandPut.id, piece);
         System.out.println("Key " + commandPut.id + " stored.");
     }

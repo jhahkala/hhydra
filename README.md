@@ -68,17 +68,21 @@ Run the client
 
 Contents of the client config file hhydra-client-trusted.conf:
 --------------------
-sslCertFile=trusted_client.cert
-sslKey=trusted_client.priv
-sslKeyPasswd=changeit
+username=testuser
+password=testpw
+useClientCredentials=false
 trustStoreDir=certificates
-hydraService=https://sicx1.hip.helsinki.fi:50201/HydraService
+hydraService=https://sicx1.hip.helsinki.fi:50201/
 --------------------
 
-You should have the trusted CA certificates in the specified directory and the client credentials in the locations specified on the config file.
+You should have the trusted CA certificates in the specified directory.
 
 Run the client with command:
-/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/bin/java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf put --id test2 --iv 12345 --key 12345678 --min 2 --part 3
+java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf put --id test2 --iv 12345 --key 12345678 --min 2 --part 3
+
+But if the user is not in the service yet, you have to add him before running the put command by runing adduser command:
+java -cp hhydra.jar org.hydra.client.HydraClient -c hhydra-client-trusted.conf adduser --username testuser --password testpw
+
 
 (Have to use openJDK, as the sun/oracle jdk gives security violation about loading the bouncycastle JCE. Or you have to install the Unlimited Strength Jurisdiction Policy Files, thanks to US government idiocy.)
 
