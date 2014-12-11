@@ -15,8 +15,6 @@ import org.hydra.KeyPiece;
 import org.joni.test.meta.ACLItem;
 
 import com.beust.jcommander.JCommander;
-import com.caucho.hessian.client.TMHessianURLConnectionFactory;
-
 import fi.hip.sicx.srp.HandshakeException;
 import fi.hip.sicx.srp.SRPAPI;
 import fi.hip.sicx.srp.SRPClient;
