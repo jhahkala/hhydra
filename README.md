@@ -12,6 +12,7 @@ Run the server
 
 Contents of the server config file hhydra.conf:
 --------------------
+```
 port=50201
 storeConfigFile=hhydra-storage.xml
 host=sicx1.hip.helsinki.fi
@@ -19,10 +20,12 @@ sslCertFile=hostcert.pem
 sslKey=hostkey.pem
 trustStoreDir=/etc/grid-security/certificates
 superuser=CN=trusted client,OU=Relaxation,O=Utopia,L=Tropic,C=UG
+```
 --------------------
 
 Contents of hhydra-storage.xml
 --------------------
+```
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns="urn:infinispan:config:5.0">
@@ -53,6 +56,7 @@ Contents of hhydra-storage.xml
     </loaders>
   </namedCache>
 </infinispan>
+```
 --------------------
 
 You should have the CA certificates in the directory specified and the host credentials in the directory where you run the program or where you specify them in the config file.
@@ -68,11 +72,13 @@ Run the client
 
 Contents of the client config file hhydra-client-trusted.conf:
 --------------------
+```
 username=testuser
 password=testpw
 useClientCredentials=false
 trustStoreDir=certificates
 hydraService=https://sicx1.hip.helsinki.fi:50201/
+```
 --------------------
 
 You should have the trusted CA certificates in the specified directory.
