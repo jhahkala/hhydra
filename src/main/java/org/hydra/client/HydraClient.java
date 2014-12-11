@@ -7,15 +7,9 @@ import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.cert.X509Certificate;
 import java.util.Properties;
 
-import javax.net.ssl.X509KeyManager;
-
 import org.bouncycastle.crypto.CryptoException;
-import org.glite.security.trustmanager.ContextWrapper;
-import org.glite.security.util.DN;
-import org.glite.security.util.DNHandler;
 import org.hydra.HydraAPI;
 import org.hydra.KeyPiece;
 import org.joni.test.meta.ACLItem;
@@ -34,7 +28,6 @@ import fi.hip.sicx.srp.hessian.HessianSRPProxyFactory;
 
 public class HydraClient {
     public static final String ENDPOINT_OPT = "hydraService";
-    private static ContextWrapper _wrapper = null;
 
     /**
      * @param args
@@ -76,7 +69,6 @@ public class HydraClient {
         HessianSRPProxyFactory factory = HessianSRPProxyFactory.getFactory(props);
 
         String url = props.getProperty(ENDPOINT_OPT, "https://localhost:40669/");
-        TMHessianURLConnectionFactory connectionFactory = new TMHessianURLConnectionFactory();
         String srpUrl = url + "SRPService";
         SRPAPI srpService = (SRPAPI) factory.create(SRPAPI.class, srpUrl);
         
